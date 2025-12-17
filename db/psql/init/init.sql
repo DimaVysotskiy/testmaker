@@ -1,9 +1,7 @@
-CREATE TYPE role_enum AS ENUM ('ADMIN', 'TEACHER', 'STUDENT');
-
 CREATE TABLE "Users"(
     id SERIAL PRIMARY KEY,
     user_login VARCHAR(255) NOT NULL UNIQUE,
-    user_role role_enum NOT NULL,
+    user_role VARCHAR(50) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
