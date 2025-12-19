@@ -11,8 +11,8 @@ class LectureCleaner:
         self.pdf_path: str = ""
 
     def _extract_raw_text(self, pdf_path):
-        """Приватный метод: просто достает текст из PDF"""
-        doc = pymupdf.open(pdf_path)
+        """Приватный метод: корректно открывает переданный путь"""
+        doc = pymupdf.open(pdf_path) # ИСПОЛЬЗУЕМ pdf_path, а не "lec1.pdf"
         text = ""
         for page in doc:
             text += "".join(page.get_text()) + "\n"
@@ -23,39 +23,42 @@ class LectureCleaner:
         raw_text = self._extract_raw_text(pdf_path)
         
         if len(raw_text) <= 50000:
-            prompt = (
-            f"Преобразуй следующий текст лекции в чистый и хорошо структурированный формат Markdown. "
-            f"Используй правильные заголовки (h1, h2, h3), маркированные списки и блоки кода там, где это уместно. "
-            f"Обязательно: Не пишите введения или заключения, просто отформатируйте предоставленный текст. "
-            f"ОБЯЗАТЕЛЬНО: Сохраняй язык оригинала (русский). Не переводи текст, не сокращай его и не добавляй ничего от себя. "
-            f"Верни только структурированный текст лекции.\n\n"
-            f"{raw_text}"
-        )
-            response: GenerateResponse = generate(
-                model="qwen3:8b",
-                prompt=prompt,
-                options={
-                    # Load time options (влияют на скорость загрузки и память)
-                    "num_ctx": 16384,     # Увеличиваем контекст для длинных лекций
-                    "num_thread": 8,      # Используем больше потоков CPU
-                    
-                    # Runtime options (влияют на саму генерацию)
-                    "temperature": 0.1,   # Низкая температура = выше точность и скорость
-                    "top_p": 0.9,
-                    "num_predict": -1,    # -1 позволяет модели генерировать до конца
-                    "repeat_penalty": 1.1 # Чтобы модель не зацикливалась на одном слове
-                },
-                system=""
+            # СИСТЕМНАЯ ИНСТРУКЦИЯ: Определяет роль и жесткие правила
+            system_instruction = (
+                "Ты — профессиональный редактор технических текстов и конспектов. "
+                "Твоя задача: преобразовать сырой текст из PDF в идеально структурированный Markdown. "
+                "\n\nПРАВИЛА:\n"
+                "1. СОХРАННОСТЬ ДАННЫХ: Запрещено сокращать, резюмировать или выбрасывать части лекции. "
+                "Весь теоретический материал должен быть сохранен.\n"
+                "2. СТРУКТУРА: Используй иерархию заголовков (#, ##, ###), жирный шрифт для терминов и списки.\n"
+                "3. КОД: Все примеры кода оформляй в соответствующие блоки (например, ```java).\n"
+                "4. ТАБУ: Не добавляй от себя приветствия, заключения или комментарии ('Вот ваш текст', 'Надеюсь, это поможет').\n"
+                "5. ЯЗЫК: Сохраняй оригинальный язык текста (русский)."
             )
 
-            result = {
-                "Полное время выполнения запроса.": response.total_duration,
+            # ПОЛЬЗОВАТЕЛЬСКИЙ ПРОМТ: Только данные
+            user_prompt = f"Преобразуй этот текст в Markdown, следуя системным правилам:\n\n{raw_text}"
+
+            response: GenerateResponse = generate(
+                model="qwen3:8b", 
+                prompt=user_prompt,
+                system=system_instruction,
+                options={
+                    "num_ctx": 20480,    
+                    "temperature": 0.1,    
+                    "num_predict": -1 
+                }
+            )
+
+            return {
+                "duration": response.total_duration,
                 "answer": response.response
             }
-
-            return result
         else:
-            return {"error": "PDF text exceeds the 50,000 character limit."}
-        
+            return {"error": "Текст PDF слишком длинный (более 50 000 символов)."}
+
+
 cleaner = LectureCleaner()
-print(cleaner.process_pdf_to_md("Лекция_5.pdf"))
+file_name = "lec.pdf"
+result = cleaner.process_pdf_to_md(file_name)
+print(result["answer"])
