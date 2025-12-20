@@ -60,7 +60,8 @@ class ConverterToMd:
             response: GenerateResponse = self.client.generate(
                 model=self.model, 
                 prompt=user_prompt,
-                system=system_instruction
+                system=system_instruction,
+                options={"temperature": 0.1}
             )
 
             return response.response

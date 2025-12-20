@@ -2,4 +2,5 @@
 .env
 __pycache__/
 *.pyc
-result.md
+lecture.md
+test.json

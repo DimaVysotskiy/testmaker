@@ -14,55 +14,10 @@ class TestMaker:
             host="https://ollama.com",
             headers={'Authorization': 'Bearer ' + str(os.environ.get('OLLAMA_API_KEY'))}
         )
+        self.model = str(os.environ.get('LLM_MODEL'))
 
-
-    def extract_raw_text(self, pdf_path: str) -> Dict[str, Union[str, Dict]] | str:
-        """Конвертатор файлов в текст. В дальнейшем переделать в отдельный класс с поддержкой разных форматов."""
-        if not pdf_path.endswith('.pdf'):
-            return {"message": "Sorry, but now I can only process PDF files :("}
-
-        try:
-            doc = pymupdf.open(pdf_path)
-            text = ""
-            for page in doc:
-                text += "".join(page.get_text()) + "\n"
-            return text
-        except Exception as e:
-            return {"message": f"Error processing PDF: {str(e)}"}
-
-
-    def process_text_to_md(self, text: str) -> Dict[str, Union[str, Dict]]:
-        """"""
-        
-        if len(text) <= 50000:
-            system_instruction = (
-                "Ты — профессиональный редактор технических текстов и конспектов. "
-                "Твоя задача: преобразовать сырой текст из PDF в идеально структурированный Markdown. "
-                "\n\nПРАВИЛА:\n"
-                "1. СОХРАННОСТЬ ДАННЫХ: Запрещено сокращать, резюмировать или выбрасывать части лекции. "
-                "Весь теоретический материал должен быть сохранен.\n"
-                "2. СТРУКТУРА: Используй иерархию заголовков (#, ##, ###), жирный шрифт для терминов и списки.\n"
-                "3. КОД: Все примеры кода оформляй в соответствующие блоки (например, ```java).\n"
-                "4. ТАБУ: Не добавляй от себя приветствия, заключения или комментарии ('Вот ваш текст', 'Надеюсь, это поможет').\n"
-                "5. ЯЗЫК: Сохраняй оригинальный язык текста (русский)."
-            )
-
-            user_prompt = f"Преобразуй этот текст в Markdown, следуя системным правилам:\n\n{text}"
-
-            response: GenerateResponse = self.client.generate(
-                model="gpt-oss:20b-cloud", 
-                prompt=user_prompt,
-                system=system_instruction
-            )
-
-            return {
-                "md_text": response.response
-            }
-        else:
-            return {"message": "Пока что я могу обрабатывать только тексты до 50 000 символов :("}
     
-
-    def make_test(self, md_text_of_lecture, level="medium", count=10, test_name="Новый тест"):
+    def make_test(self, md_text_of_lecture, level="easy", count=10, test_name="Новый тест"):
         """
         Генерация теста с учетом равного распределения сложных типов вопросов.
         """
@@ -155,9 +110,10 @@ class TestMaker:
 
         
         response: GenerateResponse = self.client.generate(
-            model="gpt-oss:20b-cloud", 
+            model=self.model, 
             prompt=user_prompt,
             system=system_instruction,
+            options={"temperature": 0.1},
             format={
                 "$schema": "http://json-schema.org/draft-07/schema#",
                 "type": "object",
