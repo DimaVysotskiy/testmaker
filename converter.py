@@ -69,11 +69,17 @@ class ConverterToMd:
     
 
     def convert(self, file_path: str):
-        """Конвертация файла лекции в Markdown."""
-        ext_info = puremagic.from_file(file_path)
+        """Главный метод конвертации файла лекции в md формат."""
+        handlers = {
+            ".pdf": self.extract_pdf_raw_text,
+            ".docx": self.extract_docx_raw_text
+        }
 
-        match ext_info:
-            case _ if ext_info == ".pdf":
-                raw_text = self.extract_pdf_raw_text(file_path)
-                md_text = self.process_text_to_md(raw_text)
-                return md_text     
+        ext_info = puremagic.from_file(file_path).lower()
+
+        for ext, handler_func in handlers.items():
+            if ext in ext_info:
+                raw_text = handler_func(file_path)
+                return self.process_text_to_md(raw_text)
+
+        raise ValueError(f"Тип файла {ext_info} не поддерживается")
