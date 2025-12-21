@@ -138,3 +138,5 @@ class TestMaker:
         )
 
         return response.response
+
+tesrmaker = TestMaker()
