@@ -83,7 +83,7 @@ class ConverterToMd:
             raise RuntimeError("Пока что я могу обрабатывать только тексты до 50 000 символов :(")
     
 
-    async def convert(self, file: UploadFile = File(...)):
+    async def convert_as_md_file(self, file: UploadFile = File(...)):
         """Главный метод конвертации файла лекции в md формат."""
         
         filename = file.filename.lower() if file.filename else ""
@@ -130,6 +130,43 @@ class ConverterToMd:
                 detail=str(e)
             )
 
+    async def convert_as_md_text(self, file: UploadFile = File(...)):
+        """Главный метод конвертации файла лекции в md формат."""
+        
+        filename = file.filename.lower() if file.filename else ""
+        if not (filename.endswith(".pdf") or filename.endswith(".docx")):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Неподдерживаемый формат файла. Пожалуйста, загружайте файлы в формате PDF или DOCX."
+            )
+        
+        MAX_SIZE = 16 * 1024 * 1024
+        
+        content = await file.read()
+        
+        if len(content) > MAX_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Размер файла превышает 16 МБ."
+            )
+
+        
+        try:
+            raw_text = ""
+            if filename.endswith(".pdf"):
+                raw_text = self.extract_pdf_raw_text(content)
+            elif filename.endswith(".docx"):
+                raw_text = self.extract_docx_raw_text(content)
+            
+            md_text_of_lecture = self.process_text_to_md(raw_text)
+            
+            return md_text_of_lecture
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e)
+            )
 
 
 

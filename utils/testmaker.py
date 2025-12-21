@@ -1,10 +1,8 @@
-import pymupdf 
 import os
 from dotenv import load_dotenv
 from ollama import generate, Client
 from ollama import GenerateResponse
 import json
-from typing import List, Dict, Union
 
 load_dotenv()
 
@@ -21,7 +19,20 @@ class TestMaker:
         """
         Генерация теста с учетом равного распределения сложных типов вопросов.
         """
-        
+
+        if count not in range(10, 101):
+            return {
+                "code_status": 400, 
+                "message": "Количество вопросов не может быть больше 100 или меньше 10."
+            }
+
+
+        if level not in ["easy", "medium", "hard"]:
+            return {
+                "code_status": 400, 
+                "message": "Недопустимый уровень сложности. Допустимые значения: easy, medium, hard."
+                }
+        print(md_text_of_lecture)
         system_instruction = (
             "Ты — эксперт по составлению тестов. Твоя задача: создать тест в формате JSON по тексту лекции. "
             
@@ -137,6 +148,6 @@ class TestMaker:
                 }
         )
 
-        return response.response
+        return json.loads(response.response)
 
-tesrmaker = TestMaker()
+testmaker = TestMaker()

@@ -1,7 +1,7 @@
 from .converter import converter
-from .testmaker import tesrmaker
+from .testmaker import testmaker
 
 __all__ = [
     "converter", 
-    "tesrmaker"
+    "testmaker"
     ]
