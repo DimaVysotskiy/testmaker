@@ -9,7 +9,8 @@ ai_tools_router = APIRouter(prefix="/ai-tools", tags=["ai-tools"])
 @ai_tools_router.get("/tools-info", summary="Получение информации о доступных AI инструментах.")
 def get_ai_tools():
     return {"tools": [
-        {"path": "/ai-tools/how_llm_see_my_lecture", "description": "Конвертация файлов лекций в формате PDF или DOCX в Markdown."}
+        {"path": "/ai-tools/how_llm_see_my_lecture", "description": "Конвертация файлов лекций в формате PDF или DOCX в Markdown."},
+        {"path": "/ai-tools/make_test", "description": "Генерация интерактивного теста по содержанию лекции."}
     ]}
 
 
