@@ -1,6 +1,7 @@
-from .enums import UserRole, OAuthProvider
+from .enums import UserRole, OAuthProvider, LessonType
 
 __all__ = [
     "UserRole",
-    "OAuthProvider"
+    "OAuthProvider",
+    "LessonType"
 ]

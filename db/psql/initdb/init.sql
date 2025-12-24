@@ -48,6 +48,11 @@ CREATE TABLE tasks (
     deadline TIMESTAMP NOT NULL
 );
 
+INSERT INTO users (email, username, hashed_password, role, is_verified, is_email_verified) 
+VALUES 
+('admin@example.com', 'admin', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'ADMIN', TRUE, TRUE),
+('teacher@example.com', 'teacher1', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'TEACHER', TRUE, TRUE),
+('student@example.com', 'student1', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'STUDENT', TRUE, TRUE);
 
 
 
@@ -60,13 +65,3 @@ END;
 $$ language 'plpgsql';
 
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_lectures_updated_at BEFORE UPDATE ON lectures FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_practices_updated_at BEFORE UPDATE ON practices FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_lab_works_updated_at BEFORE UPDATE ON lab_works FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_student_group ON student_info(group_id);
-CREATE INDEX idx_lectures_specialty_course ON lectures(specialty_id, course_number);
-CREATE INDEX idx_practices_specialty_course ON practices(specialty_id, course_number);
-CREATE INDEX idx_labs_specialty_course ON lab_works(specialty_id, course_number);
-CREATE INDEX idx_submissions_type_id ON activity_submissions(type, activity_id);

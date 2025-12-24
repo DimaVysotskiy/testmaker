@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 from enum import Enum
-from .user_shema import UserRole
+from .user_schemas import UserRole
 
 
 class Token(BaseModel):

@@ -10,3 +10,9 @@ class OAuthProvider(str, Enum):
     GOOGLE = "google"
     GITHUB = "github"
     LOCAL = "local"
+
+
+class LessonType(str, Enum):
+    LECTURE = "LECTURE"
+    PRACTICE = "PRACTICE"
+    LAB = "LAB"
