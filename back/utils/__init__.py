@@ -1,7 +1,7 @@
 from .settings import settings
 from .password import password_checker
 from .sessionmanager import get_db, Base, sessionmanager
-from .jwt import create_access_token, get_current_user, get_current_active_user
+from .jwt import create_access_token, get_current_user, get_current_active_user, require_roles
 
 __all__ = [
     'authenticate_user',
@@ -12,5 +12,6 @@ __all__ = [
     'get_current_user',
     'get_current_active_user',
     'Base',
-    'sessionmanager'
+    'sessionmanager',
+    'require_roles'
     ]

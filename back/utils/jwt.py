@@ -10,6 +10,7 @@ from jwt.exceptions import InvalidTokenError
 from ..schemas import TokenData
 from ..utils import settings
 from ..repo import get_user_repo
+from ..enums import UserRole
 
 
 
@@ -74,3 +75,17 @@ async def get_current_active_user(
     if not current_user.is_active:  # Используем is_active из вашей модели
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+def require_roles(*allowed_roles: UserRole):
+    async def role_checker(
+        current_user: Annotated[..., Depends(get_current_active_user)]
+    ):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. Required roles: {[role.value for role in allowed_roles]}"
+            )
+        return current_user
+    
+    return role_checker
