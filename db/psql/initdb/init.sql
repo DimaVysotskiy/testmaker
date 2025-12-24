@@ -1,54 +1,56 @@
--- Создание ENUM типа для ролей
 CREATE TYPE user_role AS ENUM ('STUDENT', 'TEACHER', 'ADMIN');
-
--- Создание ENUM типа для провайдеров OAuth
 CREATE TYPE oauth_provider AS ENUM ('GOOGLE', 'GITHUB', 'LOCAL');
+CREATE TYPE lesson_type AS ENUM ('LECTURE', 'PRACTICE', 'LAB');
 
--- Создание таблицы пользователей
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    
-    -- Основная информация
-    email VARCHAR(255) UNIQUE NOT NULL,
-    username VARCHAR(100) UNIQUE,
-    full_name VARCHAR(255),
-    
-    -- Аутентификация (для локальной регистрации)
-    hashed_password VARCHAR(255),  -- NULL если OAuth
-    
-    -- Роль пользователя
+
+    username VARCHAR(100) UNIQUE NOT NULL,
+    hashed_password VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
     role user_role NOT NULL DEFAULT 'STUDENT',
-    
-    -- OAuth информация
+
     oauth_provider oauth_provider NOT NULL DEFAULT 'LOCAL',
-    oauth_id VARCHAR(255),  -- ID от провайдера (Google ID, GitHub ID и т.д.)
-    oauth_access_token TEXT,  -- Токен доступа от провайдера
-    oauth_refresh_token TEXT,  -- Refresh токен
-    oauth_token_expires_at TIMESTAMP,  -- Когда истекает токен
-    
-    -- Статус аккаунта
+    oauth_id VARCHAR(255),
+    oauth_access_token TEXT,
+    oauth_refresh_token TEXT,
+    oauth_token_expires_at TIMESTAMP,
+
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    
-    -- Временные метки
+
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login_at TIMESTAMP,
-    
-    -- Ограничения
+
     CONSTRAINT unique_oauth_provider_id UNIQUE (oauth_provider, oauth_id)
 );
 
--- Создание индексов для быстрого поиска
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_oauth_provider ON users(oauth_provider);
-CREATE INDEX idx_users_oauth_id ON users(oauth_id);
-CREATE INDEX idx_users_is_active ON users(is_active);
 
--- Триггер для автоматического обновления updated_at
+
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+
+    title VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT NOT NULL, -- В описание можно оставить ссылки на доп материалы
+    file_urls TEXT[],
+    photo_urls TEXT[],
+
+    lesson_name VARCHAR(255) NOT NULL,
+    lesson_type lesson_type NOT NULL,
+    checker INTEGER NOT NULL REFERENCES users(id),
+
+    specialty VARCHAR(255) NOT NULL,
+    course INT NOT NULL,
+
+    deadline TIMESTAMP NOT NULL
+);
+
+
+
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -57,23 +59,14 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_users_updated_at 
-    BEFORE UPDATE ON users
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_lectures_updated_at BEFORE UPDATE ON lectures FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_practices_updated_at BEFORE UPDATE ON practices FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_lab_works_updated_at BEFORE UPDATE ON lab_works FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Вставка тестовых данных (опционально)
--- Пароль: admin123 (хеш для bcrypt)
-INSERT INTO users (email, username, full_name, hashed_password, role, is_verified, is_email_verified) 
-VALUES 
-    ('admin@example.com', 'admin', 'System Administrator', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'ADMIN', TRUE, TRUE),
-    ('teacher@example.com', 'teacher1', 'John Teacher', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'TEACHER', TRUE, TRUE),
-    ('student@example.com', 'student1', 'Alice Student', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'STUDENT', TRUE, TRUE);
-
-
--- Комментарии к таблице и колонкам
-COMMENT ON TABLE users IS 'Таблица пользователей с поддержкой OAuth2 и ролевой модели';
-COMMENT ON COLUMN users.role IS 'Роль пользователя: student, teacher, admin';
-COMMENT ON COLUMN users.oauth_provider IS 'Провайдер OAuth: google, github, microsoft, local';
-COMMENT ON COLUMN users.oauth_id IS 'Уникальный ID пользователя от OAuth провайдера';
-COMMENT ON COLUMN users.hashed_password IS 'Хешированный пароль (NULL для OAuth пользователей)';
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_student_group ON student_info(group_id);
+CREATE INDEX idx_lectures_specialty_course ON lectures(specialty_id, course_number);
+CREATE INDEX idx_practices_specialty_course ON practices(specialty_id, course_number);
+CREATE INDEX idx_labs_specialty_course ON lab_works(specialty_id, course_number);
+CREATE INDEX idx_submissions_type_id ON activity_submissions(type, activity_id);

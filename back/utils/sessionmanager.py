@@ -73,6 +73,7 @@ class SessionManager:
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency for getting psql session."""
     async for session in sessionmanager.get_session():
         yield session
 
