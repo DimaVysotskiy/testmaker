@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, UploadFile
 from typing import Annotated
-from utils import converter, testmaker
+from ..ai_utils import converter, testmaker
 
 
 ai_tools_router = APIRouter(prefix="/ai-tools", tags=["ai-tools"])

@@ -9,3 +9,23 @@ services:
       - OLLAMA_API_KEY=${OLLAMA_API_KEY}
       - LLM_MODEL=${LLM_MODEL}
     restart: always
+  
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    env_file: .env
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./db/psql/initdb:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+volumes:
+  postgres_data:
