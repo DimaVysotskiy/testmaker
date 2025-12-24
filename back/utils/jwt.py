@@ -1,57 +1,40 @@
+# utils/jwt.py
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 
-
-import dotenv
-import os
-
-from ..models import Token, TokenData, User, UserInDB
-from ..utils import password_checker
-
-from ..repo import user_repo
+from ..schemas import TokenData
+from ..utils import settings
+from ..repo import get_user_repo
 
 
 
 
-dotenv.load_dotenv()
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
-
-
-SECRET_KEY = os.environ.get("SECRET_KEY")
-ALGORITHM = os.environ.get("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-def authenticate_user(username: str, password: str):
-    user: UserInDB = user_repo.get_by_username(username)
-    if not user:
-        return False
-    if not password_checker.verify_password(password, user.hashed_password):
-        return False
-    return user
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """Создание JWT токена"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=30)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+def decode_access_token(token: str) -> TokenData:
+    """Декодирование и валидация токена"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -60,20 +43,34 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
+        user_role: str = payload.get("user_role")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        return TokenData(username=username, user_role=user_role)
     except InvalidTokenError:
         raise credentials_exception
-    user = user_repo.get_by_username(username=token_data.username)
+
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_repo: Annotated[..., Depends(get_user_repo)]
+):
+    """Получение текущего пользователя из токена"""
+    token_data = decode_access_token(token)
+    user = await user_repo.get_by_username(username=token_data.username)
     if user is None:
-        raise credentials_exception
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[..., Depends(get_current_user)],  # Без типа User!
 ):
-    if current_user.disabled:
+    """Проверка активности пользователя"""
+    if not current_user.is_active:  # Используем is_active из вашей модели
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

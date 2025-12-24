@@ -1,8 +1,5 @@
-from .models import User, UserInDB, Token, TokenData
+from .user_model import User
 
 __all__ = [
-    'User',
-    'UserInDB',
-    'Token',
-    'TokenData'
+    'User'
     ]

@@ -1,18 +1,18 @@
-import os
-from dotenv import load_dotenv
 from ollama import generate, Client
 from ollama import GenerateResponse
 import json
+from ..utils import settings
 
-load_dotenv()
+
+
 
 class TestMaker:
     def __init__(self):
         self.client = Client(
             host="https://ollama.com",
-            headers={'Authorization': 'Bearer ' + str(os.environ.get('OLLAMA_API_KEY'))}
+            headers={'Authorization': 'Bearer ' + settings.OLLAMA_API_KEY}
         )
-        self.model = str(os.environ.get('LLM_MODEL'))
+        self.model = settings.LLM_MODEL
 
     
     def make_test(self, md_text_of_lecture, level="easy", count=10, test_name="Новый тест"):
@@ -149,5 +149,6 @@ class TestMaker:
         )
 
         return json.loads(response.response)
+
 
 testmaker = TestMaker()

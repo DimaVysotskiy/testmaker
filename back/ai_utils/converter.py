@@ -1,30 +1,22 @@
 from fastapi.responses import StreamingResponse
 import pymupdf
-import os
 import io
-from dotenv import load_dotenv
 from ollama import Client, GenerateResponse
 from fastapi import UploadFile, File, status, HTTPException
 from docx import Document
-
-
-
-
-
-load_dotenv()
+from ..utils import settings
 
 
 
 
 class ConverterToMd:
     """Конвертатор файлов лекций в md файлы."""
-    
     def __init__(self):
         self.client = Client(
             host="https://ollama.com",
-            headers={'Authorization': 'Bearer ' + str(os.environ.get('OLLAMA_API_KEY'))}
+            headers={'Authorization': 'Bearer ' + settings.OLLAMA_API_KEY}
         )
-        self.model = str(os.environ.get('LLM_MODEL'))
+        self.model = settings.LLM_MODEL
 
 
     def extract_pdf_raw_text(self, file_bytes: bytes) -> str:

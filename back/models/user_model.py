@@ -5,18 +5,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from ..utils import Base
-import enum
+from ..enums import UserRole, OAuthProvider
 
-class UserRole(str, enum.Enum):
-    STUDENT = "student"
-    TEACHER = "teacher"
-    ADMIN = "admin"
 
-class OAuthProvider(str, enum.Enum):
-    GOOGLE = "google"
-    GITHUB = "github"
-    MICROSOFT = "microsoft"
-    LOCAL = "local"
+
 
 class User(Base):
     __tablename__ = "users"

@@ -1,7 +1,7 @@
 from .base_repo import BaseRepository
-from .user_repo import user_repo
+from .user_repo import get_user_repo
 
 __all__ = [
     'BaseRepository',
-    'user_repo'
+    'get_user_repo'
     ]

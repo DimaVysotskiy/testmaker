@@ -1,8 +1,8 @@
 -- Создание ENUM типа для ролей
-CREATE TYPE user_role AS ENUM ('student', 'teacher', 'admin');
+CREATE TYPE user_role AS ENUM ('STUDENT', 'TEACHER', 'ADMIN');
 
 -- Создание ENUM типа для провайдеров OAuth
-CREATE TYPE oauth_provider AS ENUM ('google', 'github', 'microsoft', 'local');
+CREATE TYPE oauth_provider AS ENUM ('GOOGLE', 'GITHUB', 'LOCAL');
 
 -- Создание таблицы пользователей
 CREATE TABLE users (
@@ -17,10 +17,10 @@ CREATE TABLE users (
     hashed_password VARCHAR(255),  -- NULL если OAuth
     
     -- Роль пользователя
-    role user_role NOT NULL DEFAULT 'student',
+    role user_role NOT NULL DEFAULT 'STUDENT',
     
     -- OAuth информация
-    oauth_provider oauth_provider NOT NULL DEFAULT 'local',
+    oauth_provider oauth_provider NOT NULL DEFAULT 'LOCAL',
     oauth_id VARCHAR(255),  -- ID от провайдера (Google ID, GitHub ID и т.д.)
     oauth_access_token TEXT,  -- Токен доступа от провайдера
     oauth_refresh_token TEXT,  -- Refresh токен
@@ -66,14 +66,10 @@ CREATE TRIGGER update_users_updated_at
 -- Пароль: admin123 (хеш для bcrypt)
 INSERT INTO users (email, username, full_name, hashed_password, role, is_verified, is_email_verified) 
 VALUES 
-    ('admin@example.com', 'admin', 'System Administrator', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5aeJFxYw1pNji', 'admin', TRUE, TRUE),
-    ('teacher@example.com', 'teacher1', 'John Teacher', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5aeJFxYw1pNji', 'teacher', TRUE, TRUE),
-    ('student@example.com', 'student1', 'Alice Student', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5aeJFxYw1pNji', 'student', TRUE, TRUE);
+    ('admin@example.com', 'admin', 'System Administrator', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'ADMIN', TRUE, TRUE),
+    ('teacher@example.com', 'teacher1', 'John Teacher', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'TEACHER', TRUE, TRUE),
+    ('student@example.com', 'student1', 'Alice Student', '$argon2id$v=19$m=65536,t=3,p=4$gDa6b58Z0M14aO/PAMe4MQ$gjkvtMJH1VjRRHsSRT0ZW6Acxlclo2vv5UjyXhzOiNE', 'STUDENT', TRUE, TRUE);
 
--- Пример пользователя с OAuth (Google)
-INSERT INTO users (email, username, full_name, role, oauth_provider, oauth_id, avatar_url, is_verified, is_email_verified) 
-VALUES 
-    ('oauth.user@gmail.com', 'oauth_user', 'OAuth User', 'student', 'google', '1234567890', 'https://lh3.googleusercontent.com/...', TRUE, TRUE);
 
 -- Комментарии к таблице и колонкам
 COMMENT ON TABLE users IS 'Таблица пользователей с поддержкой OAuth2 и ролевой модели';

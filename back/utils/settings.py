@@ -1,7 +1,5 @@
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-from pathlib import Path
-import os
+
 
 
 
@@ -19,6 +17,9 @@ class Settings(BaseSettings):
     MAX_OVERFLOW: int = 10
     POOL_RECYCLE: int = 3600
     DEBUG: bool = False
+    OLLAMA_API_KEY: str
+    LLM_MODEL: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

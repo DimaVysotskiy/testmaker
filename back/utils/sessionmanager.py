@@ -12,7 +12,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import AsyncAdaptedQueuePool
 from sqlalchemy.sql import text
 
-from ..utils import settings
+from . import settings
 
 
 class Base(DeclarativeBase):
