@@ -35,8 +35,8 @@ CREATE TABLE tasks (
 
     title VARCHAR(255) UNIQUE NOT NULL,
     description TEXT NOT NULL, -- В описание можно оставить ссылки на доп материалы
-    file_urls TEXT[],
-    photo_urls TEXT[],
+    files_metadata JSONB DEFAULT '[]'::jsonb,
+    photos_metadata JSONB DEFAULT '[]'::jsonb,
 
     lesson_name VARCHAR(255) NOT NULL,
     lesson_type lesson_type NOT NULL,

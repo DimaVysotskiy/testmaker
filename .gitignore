@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 lecture.md
 test.json
+settings.json
