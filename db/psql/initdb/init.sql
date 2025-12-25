@@ -65,3 +65,34 @@ END;
 $$ language 'plpgsql';
 
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+
+
+CREATE TYPE answer_status AS ENUM ('SUBMITTED', 'GRADED', 'RETURNED');
+
+CREATE TABLE answers (
+    id SERIAL PRIMARY KEY,
+
+    task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    message TEXT NOT NULL,
+    files_metadata JSONB DEFAULT '[]'::jsonb,
+    photos_metadata JSONB DEFAULT '[]'::jsonb,
+
+    status answer_status NOT NULL DEFAULT 'SUBMITTED',
+    grade INTEGER CHECK (grade >= 0 AND grade <= 100),
+    teacher_comment TEXT,
+
+    add_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    graded_at TIMESTAMP,
+
+    -- Студент может отправить только один ответ на задание
+    CONSTRAINT unique_student_task UNIQUE (task_id, student_id)
+);
+
+-- Индексы для быстрого поиска
+CREATE INDEX idx_answers_task_id ON answers(task_id);
+CREATE INDEX idx_answers_student_id ON answers(student_id);
+CREATE INDEX idx_answers_status ON answers(status);
+CREATE INDEX idx_answers_add_at ON answers(add_at);

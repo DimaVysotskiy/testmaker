@@ -16,3 +16,8 @@ class LessonType(str, Enum):
     LECTURE = "LECTURE"
     PRACTICE = "PRACTICE"
     LAB = "LAB"
+
+class AnswerStatus(str, Enum):
+    SUBMITTED = "SUBMITTED"  # Отправлено на проверку
+    GRADED = "GRADED"        # Оценено
+    RETURNED = "RETURNED"  
