@@ -45,7 +45,7 @@ CREATE TABLE tasks (
     specialty VARCHAR(255) NOT NULL,
     course INT NOT NULL,
 
-    deadline TIMESTAMP NOT NULL
+    deadline TIMESTAMP
 );
 
 INSERT INTO users (email, username, hashed_password, role, is_verified, is_email_verified) 

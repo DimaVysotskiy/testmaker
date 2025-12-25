@@ -19,7 +19,7 @@ class TaskBase(BaseModel):
     checker: int
     specialty: str
     course: int
-    deadline: datetime
+    deadline: Optional[datetime] = None
     # Поля для файлов опциональны и по умолчанию пустые списки
     files_metadata: List[FileMetadata] = Field(default_factory=list)
     photos_metadata: List[FileMetadata] = Field(default_factory=list)
