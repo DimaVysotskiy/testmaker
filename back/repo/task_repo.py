@@ -5,9 +5,9 @@ from typing import Sequence, Optional
 from datetime import datetime
 
 from ..repo import BaseRepository
-from ..models import Task
+from ..entities.models import Task
 from ..utils import get_db
-from ..enums import LessonType
+from ..entities.enums import LessonType
 
 
 class TaskRepository(BaseRepository[Task]):

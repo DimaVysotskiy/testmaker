@@ -7,10 +7,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 
-from ..schemas import TokenData
+from ..entities.schemas import TokenData
 from ..utils import settings
 from ..repo import get_user_repo
-from ..enums import UserRole
+from ..entities.enums import UserRole
 
 
 

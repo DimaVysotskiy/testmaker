@@ -4,7 +4,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
-from ..utils import Base
+from ...utils import Base
 from ..enums import LessonType
 
 

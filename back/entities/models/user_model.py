@@ -4,7 +4,7 @@ from sqlalchemy import (
     Enum as SQLEnum, UniqueConstraint
 )
 from sqlalchemy.sql import func
-from ..utils import Base
+from ...utils import Base
 from ..enums import UserRole, OAuthProvider
 
 

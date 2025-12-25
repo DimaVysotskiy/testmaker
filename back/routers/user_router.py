@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated, List, Optional
 
-from ..schemas import User, UserCreate, UserBase
+from ..entities.schemas import User, UserCreate, UserBase
 from ..repo import get_user_repo
 from ..utils import get_current_active_user, require_roles, password_checker
-from ..enums import UserRole
+from ..entities.enums import UserRole
 
 
 user_router = APIRouter(prefix="/user", tags=["user"])

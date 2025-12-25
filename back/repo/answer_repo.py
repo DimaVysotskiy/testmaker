@@ -5,9 +5,9 @@ from typing import Sequence, Optional
 from datetime import datetime
 
 from ..repo import BaseRepository
-from ..models import Answer
+from ..entities.models import Answer
 from ..utils import get_db
-from ..enums import AnswerStatus
+from ..entities.enums import AnswerStatus
 
 
 class AnswerRepository(BaseRepository[Answer]):

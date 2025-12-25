@@ -1,7 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, Depends
 from typing import Annotated
 from ..ai_utils import converter, testmaker
-from ..enums import UserRole
+from ..entities.enums import UserRole
 from ..utils import require_roles
 
 

@@ -3,10 +3,10 @@ from typing import Annotated, List, Optional
 from datetime import datetime
 import uuid
 
-from ..schemas import Task, TaskUpdate, User
+from ..entities.schemas import Task, TaskUpdate, User
 from ..repo import get_task_repo
 from ..utils import get_current_active_user, require_roles, get_minio, MinioManager
-from ..enums import UserRole, LessonType
+from ..entities.enums import UserRole, LessonType
 
 
 task_router = APIRouter(prefix="/tasks", tags=["tasks"])

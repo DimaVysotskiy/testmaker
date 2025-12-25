@@ -3,10 +3,10 @@ from typing import Annotated, List, Optional
 from datetime import datetime
 import uuid
 
-from ..schemas import Answer, AnswerGrade, User
+from ..entities.schemas import Answer, AnswerGrade, User
 from ..repo import get_answer_repo, get_task_repo
 from ..utils import get_current_active_user, require_roles, get_minio, MinioManager
-from ..enums import UserRole, AnswerStatus
+from ..entities.enums import UserRole, AnswerStatus
 
 
 answer_router = APIRouter(prefix="/answers", tags=["answers"])

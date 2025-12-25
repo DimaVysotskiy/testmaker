@@ -6,8 +6,8 @@ from typing import Annotated
 from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from ..schemas import Token, TokenData
-from ..models import User
+from ..entities.schemas import Token, TokenData
+from ..entities.models import User
 from ..repo import get_user_repo
 from ..utils import create_access_token, settings
 

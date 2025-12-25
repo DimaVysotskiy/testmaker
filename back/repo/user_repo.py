@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 
 from ..repo import BaseRepository
-from ..models import User
+from ..entities.models import User
 from ..utils import get_db, password_checker
 
 
