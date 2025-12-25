@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from typing import Annotated, List, Optional
 
 from ..entities.schemas import User, UserCreate, UserBase
-from ..repo import get_user_repo
-from ..utils import get_current_active_user, require_roles, password_checker
+from ..services import get_user_service, UserService
+from ..utils import get_current_active_user, require_roles
 from ..entities.enums import UserRole
 
 
@@ -27,16 +27,10 @@ async def read_users_me(
 )
 async def get_user(
     user_id: int,
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """Получить пользователя по ID. Только для администраторов."""
-    user = await user_repo.get(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
+    return await user_service.get_user_by_id(user_id)
 
 
 @user_router.get(
@@ -46,11 +40,10 @@ async def get_user(
     dependencies=[Depends(require_roles(UserRole.ADMIN))]
 )
 async def get_all_users(
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """Получить список всех пользователей. Только для администраторов."""
-    users = await user_repo.get_all()
-    return users
+    return await user_service.get_all_users()
 
 
 @user_router.get(
@@ -61,16 +54,10 @@ async def get_all_users(
 )
 async def get_user_by_username(
     username: str,
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """Получить пользователя по username. Только для администраторов."""
-    user = await user_repo.get_by_username(username)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
+    return await user_service.get_user_by_username(username)
 
 
 @user_router.get(
@@ -81,16 +68,10 @@ async def get_user_by_username(
 )
 async def get_user_by_email(
     email: str,
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """Получить пользователя по email. Только для администраторов."""
-    user = await user_repo.get_by_email(email)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
+    return await user_service.get_user_by_email(email)
 
 
 # POST операции
@@ -103,39 +84,13 @@ async def get_user_by_email(
 )
 async def create_user(
     user_data: UserCreate,
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """
     Создать нового пользователя. Только для администраторов.
     Проверяет уникальность username и email.
     """
-    # Проверка уникальности username
-    if user_data.username:
-        existing_user = await user_repo.get_by_username(user_data.username)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already exists"
-            )
-    
-    # Проверка уникальности email
-    existing_user = await user_repo.get_by_email(user_data.email)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already exists"
-        )
-    
-    # Хешируем пароль
-    hashed_password = password_checker.get_password_hash(user_data.password)
-    
-    # Подготавливаем данные для создания
-    user_dict = user_data.model_dump(exclude={"password"})
-    user_dict["hashed_password"] = hashed_password
-    
-    # Создаем пользователя
-    user = await user_repo.create(user_dict)
-    return user
+    return await user_service.create_user(user_data)
 
 
 # PUT операции
@@ -147,41 +102,13 @@ async def create_user(
 async def update_my_profile(
     user_data: UserBase,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """
     Обновить свой профиль. Пользователь может изменить свои данные,
     кроме роли и статусов активности/верификации.
     """
-    update_dict = {}
-    
-    # Проверка уникальности username при изменении
-    if user_data.username and user_data.username != current_user.username:
-        existing_user = await user_repo.get_by_username(user_data.username)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already exists"
-            )
-        update_dict["username"] = user_data.username
-    
-    # Проверка уникальности email при изменении
-    if user_data.email != current_user.email:
-        existing_user = await user_repo.get_by_email(user_data.email)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already exists"
-            )
-        update_dict["email"] = user_data.email
-        update_dict["is_email_verified"] = False  # Требуется повторная верификация
-
-    
-    if update_dict:
-        user = await user_repo.update(current_user.id, update_dict)
-        return user
-    
-    return current_user
+    return await user_service.update_user_profile(current_user, user_data)
 
 
 @user_router.put(
@@ -199,56 +126,22 @@ async def update_user(
     is_active: Optional[bool] = None,
     is_verified: Optional[bool] = None,
     is_email_verified: Optional[bool] = None,
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """
     Обновить пользователя. Только для администраторов.
     Администратор может изменять любые поля, включая роль и статусы.
     """
-    user = await user_repo.get(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    update_dict = {}
-    
-    # Проверка уникальности username
-    if username and username != user.username:
-        existing_user = await user_repo.get_by_username(username)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already exists"
-            )
-        update_dict["username"] = username
-    
-    # Проверка уникальности email
-    if email and email != user.email:
-        existing_user = await user_repo.get_by_email(email)
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already exists"
-            )
-        update_dict["email"] = email
-    
-    if full_name is not None:
-        update_dict["full_name"] = full_name
-    if role is not None:
-        update_dict["role"] = role
-    if is_active is not None:
-        update_dict["is_active"] = is_active
-    if is_verified is not None:
-        update_dict["is_verified"] = is_verified
-    if is_email_verified is not None:
-        update_dict["is_email_verified"] = is_email_verified
-    
-    if update_dict:
-        user = await user_repo.update(user_id, update_dict)
-    
-    return user
+    return await user_service.update_user_by_admin(
+        user_id=user_id,
+        email=email,
+        username=username,
+        full_name=full_name,
+        role=role,
+        is_active=is_active,
+        is_verified=is_verified,
+        is_email_verified=is_email_verified
+    )
 
 
 @user_router.put(
@@ -259,32 +152,12 @@ async def change_my_password(
     old_password: str,
     new_password: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """
     Изменить свой пароль. Требуется текущий пароль для подтверждения.
     """
-    # Проверка, что пользователь не OAuth
-    if not current_user.hashed_password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot change password for OAuth users"
-        )
-    
-    # Проверка старого пароля
-    if not password_checker.verify_password(old_password, current_user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect old password"
-        )
-    
-    # Хешируем новый пароль
-    new_hashed_password = password_checker.get_password_hash(new_password)
-    
-    # Обновляем пароль
-    await user_repo.update(current_user.id, {"hashed_password": new_hashed_password})
-    
-    return {"message": "Password successfully changed"}
+    return await user_service.change_password(current_user, old_password, new_password)
 
 
 @user_router.put(
@@ -295,32 +168,12 @@ async def change_my_password(
 async def reset_user_password(
     user_id: int,
     new_password: str,
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """
     Сбросить пароль пользователя. Только для администраторов.
     """
-    user = await user_repo.get(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    # Проверка, что пользователь не OAuth
-    if not user.hashed_password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot reset password for OAuth users"
-        )
-    
-    # Хешируем новый пароль
-    new_hashed_password = password_checker.get_password_hash(new_password)
-    
-    # Обновляем пароль
-    await user_repo.update(user_id, {"hashed_password": new_hashed_password})
-    
-    return {"message": f"Password for user {user.username} successfully reset"}
+    return await user_service.reset_password(user_id, new_password)
 
 
 # DELETE операции
@@ -332,44 +185,11 @@ async def reset_user_password(
 )
 async def delete_user(
     user_id: int,
-    user_repo = Depends(get_user_repo)
+    user_service: UserService = Depends(get_user_service)
 ):
     """
     Удалить пользователя. Только для администраторов.
     Внимание: это удалит пользователя и все связанные с ним данные.
     """
-    user = await user_repo.get(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    await user_repo.delete(user_id)
-    return None
-
-
-@user_router.delete(
-    "/me",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Удаление своего аккаунта"
-)
-async def delete_my_account(
-    password: str,
-    current_user: Annotated[User, Depends(get_current_active_user)],
-    user_repo = Depends(get_user_repo)
-):
-    """
-    Удалить свой аккаунт. Требуется подтверждение паролем.
-    Внимание: это действие необратимо и удалит все ваши данные.
-    """
-    # Проверка пароля для подтверждения
-    if current_user.hashed_password:
-        if not password_checker.verify_password(password, current_user.hashed_password):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect password"
-            )
-    
-    await user_repo.delete(current_user.id)
+    await user_service.delete_user(user_id)
     return None
